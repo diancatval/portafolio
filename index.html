@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalina Valdivieso | Interactive Designer</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Jura:wght@300;500;700&family=League+Spartan:wght@400;700;800&family=Rajdhani:wght@300;500;600;700&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-purple: #bd00ff;
+            --neon-green: #00ff9d;
+            --white: #ffffff;
+            --gray: #888888;
+            --glass: rgba(10, 10, 10, 0.7);
+            --border-width: 1px;
+            --font-futura: 'League Spartan', 'Futura', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--white);
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1 {
+            font-family: var(--font-futura);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        h2,
+        h3 {
+            font-family: 'Jura', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0),
+                    rgba(255, 255, 255, 0) 50%,
+                    rgba(0, 0, 0, 0.2) 50%,
+                    rgba(0, 0, 0, 0.2));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 900;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 50%, black 100%);
+            pointer-events: none;
+            z-index: 899;
+        }
+
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: #000;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .loader-text {
+            color: var(--neon-green);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .loader-bar-container {
+            width: 300px;
+            height: 4px;
+            background: #222;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--neon-purple);
+            box-shadow: 0 0 15px var(--neon-purple);
+            transition: width 0.1s linear;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        section {
+            padding: 100px 0;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .cyber-line {
+            width: 100px;
+            height: 2px;
+            background: var(--neon-green);
+            margin: 20px 0;
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .glitch-text {
+            position: relative;
+        }
+
+        .glitch-text::before,
+        .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+        }
+
+        .glitch-text::before {
+            left: 2px;
+            text-shadow: -1px 0 red;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim-1 5s infinite linear alternate-reverse;
+        }
+
+        .glitch-text::after {
+            left: -2px;
+            text-shadow: -1px 0 blue;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim-2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim-1 {
+            0% {
+                clip: rect(20px, 9999px, 10px, 0);
+            }
+
+            20% {
+                clip: rect(60px, 9999px, 70px, 0);
+            }
+
+            40% {
+                clip: rect(30px, 9999px, 50px, 0);
+            }
+
+            60% {
+                clip: rect(80px, 9999px, 20px, 0);
+            }
+
+            80% {
+                clip: rect(10px, 9999px, 60px, 0);
+            }
+
+            100% {
+                clip: rect(50px, 9999px, 30px, 0);
+            }
+        }
+
+        @keyframes glitch-anim-2 {
+            0% {
+                clip: rect(10px, 9999px, 80px, 0);
+            }
+
+            20% {
+                clip: rect(40px, 9999px, 10px, 0);
+            }
+
+            40% {
+                clip: rect(70px, 9999px, 30px, 0);
+            }
+
+            60% {
+                clip: rect(20px, 9999px, 60px, 0);
+            }
+
+            80% {
+                clip: rect(50px, 9999px, 20px, 0);
+            }
+
+            100% {
+                clip: rect(80px, 9999px, 40px, 0);
+            }
+        }
+
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        .hero-content {
+            border-left: 4px solid var(--neon-purple);
+            padding-left: 40px;
+            background: linear-gradient(90deg, rgba(189, 0, 255, 0.1) 0%, transparent 100%);
+        }
+
+        .hero h1 {
+            font-size: 5rem;
+            line-height: 1;
+            margin-bottom: 20px;
+            color: var(--white);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            font-weight: 800;
+        }
+
+        .hero h2 {
+            font-size: 1.5rem;
+            color: var(--neon-green);
+            font-family: 'Share Tech Mono', monospace;
+            margin-bottom: 30px;
+        }
+
+        .btn-neon {
+            display: inline-block;
+            padding: 15px 40px;
+            border: 1px solid var(--neon-purple);
+            color: var(--neon-purple);
+            font-family: 'Jura', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        .btn-neon:hover {
+            background: var(--neon-purple);
+            color: var(--white);
+            box-shadow: 0 0 20px var(--neon-purple);
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .profile-frame {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            border: 1px solid var(--gray);
+            padding: 10px;
+        }
+
+        .profile-frame::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 20px;
+            height: 20px;
+            border-top: 2px solid var(--neon-green);
+            border-left: 2px solid var(--neon-green);
+        }
+
+        .profile-frame::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            border-bottom: 2px solid var(--neon-green);
+            border-right: 2px solid var(--neon-green);
+        }
+
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a;
+            background-image: url('./assets/retrato-diana.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: grayscale(100%) contrast(1.2);
+            transition: 0.5s;
+        }
+
+        .profile-frame:hover .profile-img {
+            filter: grayscale(0%) contrast(1);
+        }
+
+        .education-badge {
+            margin-top: 20px;
+            padding: 15px;
+            border-left: 3px solid var(--neon-purple);
+            background: linear-gradient(90deg, rgba(189, 0, 255, 0.1), transparent);
+            font-family: 'Jura', sans-serif;
+            color: var(--white);
+        }
+
+        .education-badge strong {
+            color: var(--neon-purple);
+            font-size: 1.1rem;
+        }
+
+        .chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .chip {
+            padding: 8px 16px;
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            font-size: 0.9rem;
+            background: rgba(0, 255, 157, 0.05);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+
+        .skill-card {
+            background: var(--glass);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .skill-card:hover {
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 15px rgba(189, 0, 255, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .skill-icon {
+            font-size: 2rem;
+            color: var(--neon-purple);
+            margin-bottom: 15px;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 40px;
+        }
+
+        .project-card {
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            transition: border-color 0.3s;
+        }
+
+        .project-card:hover {
+            border-color: var(--neon-green);
+        }
+
+        .card-content {
+            padding: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .project-title {
+            font-size: 1.8rem;
+            color: var(--white);
+            margin-bottom: 5px;
+        }
+
+        .project-desc-es {
+            font-size: 1rem;
+            color: #ddd;
+            margin-bottom: 10px;
+        }
+
+        .project-desc-en {
+            font-size: 0.85rem;
+            color: var(--gray);
+            font-style: italic;
+            border-left: 2px solid var(--neon-purple);
+            padding-left: 10px;
+            margin-bottom: 20px;
+        }
+
+        .project-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--neon-green);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+
+        .project-link:hover {
+            text-shadow: 0 0 10px var(--neon-green);
+            gap: 15px;
+        }
+
+        .card-bg-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.05), transparent 70%);
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .project-card:hover .card-bg-glow {
+            opacity: 1;
+        }
+
+        .contact-wrapper {
+            background: var(--white);
+            color: var(--bg-dark);
+            padding: 60px;
+            position: relative;
+        }
+
+        .contact-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--neon-purple);
+            z-index: -1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            background: #f0f0f0;
+            border: none;
+            border-bottom: 2px solid var(--bg-dark);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-bottom-color: var(--neon-purple);
+            background: #e6e6e6;
+        }
+
+        .btn-submit {
+            background: var(--bg-dark);
+            color: var(--white);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: var(--neon-purple);
+            box-shadow: 5px 5px 0 var(--neon-green);
+        }
+
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px 0;
+            text-align: center;
+            background: #000;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            color: var(--gray);
+            transition: 0.3s;
+        }
+
+        .social-links a:hover {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+            transform: scale(1.2);
+        }
+
+        .js-tilt-glare {
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+
+            .about-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-wrapper {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div id="loader">
+        <div class="loader-text">INITIALIZING SYSTEM... <span id="percent">0%</span></div>
+        <div class="loader-bar-container">
+            <div class="loader-bar" id="loader-bar"></div>
+        </div>
+    </div>
+
+    <main>
+
+        <!-- Hero Section -->
+        <section class="hero container">
+            <div class="hero-content">
+                <h1 class="glitch-text" data-text="CATALINA VALDIVIESO">CATALINA<br>VALDIVIESO</h1>
+                <h2>DISEÑADORA INTERACTIVA • UX/UI</h2>
+                <a href="#projects" class="btn-neon">VER PORTAFOLIO</a>
+            </div>
+        </section>
+
+        <!-- About Me -->
+        <section class="container" id="about">
+            <div class="cyber-line"></div>
+            <h2 style="color: var(--neon-purple); margin-bottom: 40px;">// 01. SOBRE MÍ</h2>
+
+            <div class="about-grid">
+                <div class="profile-frame">
+                    <div class="profile-img"></div>
+                </div>
+                <div>
+                    <h3 style="font-size: 2rem; margin-bottom: 20px;">CREANDO FUTUROS DIGITALES</h3>
+                    <p style="margin-bottom: 20px; font-size: 1.1rem; color: #ccc;">
+                        Diseñadora apasionada por la intersección entre la tecnología, la estética futurista y la
+                        usabilidad humana. Transformo conceptos abstractos en interfaces tangibles y experiencias
+                        inmersivas.
+                    </p>
+
+                    <div class="education-badge">
+                        <i data-lucide="graduation-cap" style="vertical-align: middle; margin-right: 8px;"></i>
+                        Estudiante de Pregrado en el <br>
+                        <strong>POLITÉCNICO GRANCOLOMBIANO</strong>
+                    </div>
+
+                    <div class="chips-container">
+                        <div class="chip">DISEÑO GRÁFICO</div>
+                        <div class="chip">UX / UI</div>
+                        <div class="chip">ACCESIBILIDAD</div>
+                        <div class="chip">DESIGN THINKING</div>
+                        <div class="chip">CYBERPUNK AESTHETICS</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="container" id="skills">
+            <div class="cyber-line"></div>
+            <h2 style="color: var(--neon-green); margin-bottom: 40px; text-align: right;">// 02. ARSENAL TÉCNICO</h2>
+
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <i data-lucide="monitor" class="skill-icon"></i>
+                    <h3>PHOTOSHOP</h3>
+                </div>
+                <div class="skill-card">
+                    <i data-lucide="pen-tool" class="skill-icon"></i>
+                    <h3>ILLUSTRATOR</h3>
+                </div>
+                <div class="skill-card">
+                    <i data-lucide="figma" class="skill-icon"></i>
+                    <h3>FIGMA</h3>
+                </div>
+                <div class="skill-card">
+                    <i data-lucide="cpu" class="skill-icon"></i>
+                    <h3>CHATGPT</h3>
+                </div>
+                <div class="skill-card">
+                    <i data-lucide="sparkles" class="skill-icon"></i>
+                    <h3>GOOGLE AI STUDIO</h3>
+                </div>
+            </div>
+        </section>
+
+        <section class="container" id="projects">
+            <div class="cyber-line"></div>
+            <h2 style="color: var(--neon-purple); margin-bottom: 60px;">// 03. PROYECTOS SELECCIONADOS</h2>
+
+            <div class="projects-grid">
+                <article class="project-card tilt-card">
+                    <div class="card-bg-glow"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <h3 class="project-title">ATLÉTICO ANDINO FC</h3>
+                            <i data-lucide="trophy" color="#bd00ff"></i>
+                        </div>
+                        <p class="project-desc-es">Diseño completo de marca para equipo de fútbol: logo, camisetas, web y visuales.</p>
+                        <p class="project-desc-en">Página web</p>
+                        <a href="https://atleticoandinofc.my.canva.site/" target="_blank" class="project-link">
+                            VER PROYECTO <i data-lucide="arrow-up-right" size="16"></i>
+                        </a>
+                    </div>
+                </article>
+                <article class="project-card tilt-card">
+                    <div class="card-bg-glow"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <h3 class="project-title">DRAG ENDURANCE</h3>
+                            <i data-lucide="crown" color="#bd00ff"></i>
+                        </div>
+                        <p class="project-desc-es">Revista digital inspirada en el evento Antifashion de Bogotá. Explora cultura drag con animaciones vibrantes, glitter animado, brillos, tipografía moderna y estilo editorial contemporanea.</p>
+                        <p class="project-desc-en">Digital magazine. Drag culture highlighted with vibrant animation,
+                            shining effects, and energetic visuals.</p>
+                        <a href="https://www.canva.com/design/DAGWSPmHh8E/3nM3LPUjdZ1P01TgrHqOjQ/edit" target="_blank"
+                            class="project-link">
+                            VER PROYECTO <i data-lucide="arrow-up-right" size="16"></i>
+                        </a>
+                    </div>
+                </article>
+
+                <article class="project-card tilt-card">
+                    <div class="card-bg-glow"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <h3 class="project-title">HISTORIA DEL FANTASMA</h3>
+                            <i data-lucide="ghost" color="#bd00ff"></i>
+                        </div>
+                        <p class="project-desc-es">Juego narrativo de decisiones sobre un espíritu atrapado en un
+                            espejo en estilo cuphead.</p>
+                        <p class="project-desc-en">Decision-based narrative game. Dark style, glitches, floating
+                            particles, and dynamic shadows.</p>
+                        <a href="https://www.figma.com/proto/BK3JDIBlQk14Bl6ohbsn7F/Juego" target="_blank"
+                            class="project-link">
+                            VER PROYECTO <i data-lucide="arrow-up-right" size="16"></i>
+                        </a>
+                    </div>
+                </article>
+
+                <article class="project-card tilt-card">
+                    <div class="card-bg-glow"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <h3 class="project-title">BENSAW ESCAPE ROOM</h3>
+                            <i data-lucide="lock" color="#00ff9d"></i>
+                        </div>
+                        <p class="project-desc-es">Juego interactivo basado en las 8 reglas de Shneiderman. Estilo
+                            laboratorio digital retro futurista con paneles animados.</p>
+                        <p class="project-desc-en">Interactive game. Futuristic lab with animated opening panels,
+                            holograms, glass effects, and 3D elements.</p>
+                        <a href="https://www.figma.com/proto/88sIlR74pFHv2rlNOElE1T/BENSAW-Scape-Room" target="_blank"
+                            class="project-link">
+                            VER PROYECTO <i data-lucide="arrow-up-right" size="16"></i>
+                        </a>
+                    </div>
+                </article>
+
+                <article class="project-card tilt-card">
+                    <div class="card-bg-glow"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <h3 class="project-title">SENTIDO</h3>
+                            <i data-lucide="flag" color="#00ff9d"></i>
+                        </div>
+                        <p class="project-desc-es">Identidad visual para movimiento político de Facatativá. Utilizando elementos de la cultura muisca.</p>
+                        <p class="project-desc-en">Branding for political movement. Floating/rotating 3D mockups, smooth
+                            animations, and dynamic lighting.</p>
+                        <a href="https://www.behance.net/dianacvaldivi" target="_blank" class="project-link">
+                            VER PROYECTO <i data-lucide="arrow-up-right" size="16"></i>
+                        </a>
+                    </div>
+                </article>
+                <article class="project-card tilt-card">
+                    <div class="card-bg-glow"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <h3 class="project-title">MEOW MATCH</h3>
+                            <i data-lucide="cat" color="#00ff9d"></i>
+                        </div>
+                        <p class="project-desc-es">Proyecto inspirado en “El signo del gato” de Ray Bradbury. App tipo
+                            citas donde el protagonista es un gato.</p>
+                        <p class="project-desc-en">Dating-style app inspired by Ray Bradbury. Floating 3D characters,
+                            interactive buttons, and elastic transitions.</p>
+                        <a href="https://www.canva.com/design/DAG1QECL-mg/nq57SyE6V13-J5rqFnRtrA/view" target="_blank"
+                            class="project-link">
+                            VER PROYECTO <i data-lucide="arrow-up-right" size="16"></i>
+                        </a>
+                    </div>
+                </article>
+
+
+            </div>
+        </section>
+
+        <section class="container" id="contact" style="margin-bottom: 100px;">
+            <div class="cyber-line"></div>
+            <h2 style="color: var(--white); margin-bottom: 40px;">// 04. INICIAR TRANSMISIÓN</h2>
+
+            <div class="contact-wrapper">
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label>NOMBRE DEL AGENTE</label>
+                        <input type="text" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>FRECUENCIA (EMAIL)</label>
+                        <input type="email" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>MENSAJE ENCRIPTADO</label>
+                        <textarea rows="4" class="form-input" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit">ENVIAR DATOS</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <h3 style="color: var(--neon-purple);">DIANA CATALINA VALDIVIESO MOGOLLÓN</h3>
+            <p style="font-size: 0.9rem; margin-top: 10px; color: var(--gray);">DIANCAT.VAL@GMAIL.COM</p>
+
+            <div class="social-links">
+                <a href="https://www.linkedin.com/in/diana-valdivieso?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
+                    target="_blank">
+                    <i data-lucide="linkedin"></i>
+                </a>
+                <a href="https://www.instagram.com/sadtan___?igsh=cGMxZzUxanZrMTJj&utm_source=qr" target="_blank">
+                    <i data-lucide="instagram"></i>
+                </a>
+                <a href="https://www.behance.net/dianacvaldivi" target="_blank">
+                    <i data-lucide="behance"></i>
+                </a>
+                <a href="mailto:diancat.val@gmail.com">
+                    <i data-lucide="mail"></i>
+                </a>
+            </div>
+
+            <p style="margin-top: 30px; font-size: 0.8rem; opacity: 0.5;">
+                SYSTEM VERSION 2.0.25 | BOGOTÁ, COLOMBIA
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.IcosahedronGeometry(2, 1);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0xbd00ff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        const geo2 = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+        const mat2 = new THREE.MeshBasicMaterial({
+            color: 0x00ff9d,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.2
+        });
+        const box = new THREE.Mesh(geo2, mat2);
+        scene.add(box);
+
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 700;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 15;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8
+        });
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        camera.position.z = 5;
+
+        let mouseX = 0;
+        let mouseY = 0;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX / window.innerWidth - 0.5;
+            mouseY = event.clientY / window.innerHeight - 0.5;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            sphere.rotation.y += 0.002;
+            sphere.rotation.x += 0.001;
+            box.rotation.y -= 0.003;
+            box.rotation.z += 0.002;
+
+            particlesMesh.rotation.y = mouseY * 0.2;
+            particlesMesh.rotation.x = mouseX * 0.2;
+
+            camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        const loader = document.getElementById('loader');
+        const bar = document.getElementById('loader-bar');
+        const percent = document.getElementById('percent');
+        let width = 0;
+
+        const interval = setInterval(() => {
+            if (width >= 100) {
+                clearInterval(interval);
+                loader.style.clipPath = 'inset(0 0 50% 0)';
+                setTimeout(() => {
+                    loader.style.opacity = '0';
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 500);
+                }, 200);
+            } else {
+                width++;
+                bar.style.width = width + '%';
+                percent.innerText = width + '%';
+            }
+        }, 20);
+
+        const sections = document.querySelectorAll('section');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        sections.forEach(sec => observer.observe(sec));
+
+        const cards = document.querySelectorAll('.tilt-card');
+
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = ((y - centerY) / centerY) * -10;
+                const rotateY = ((x - centerX) / centerX) * 10;
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+            });
+        });
+
+        document.getElementById('contactForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+
+            btn.innerText = 'ENVIANDO...';
+            btn.style.background = 'var(--neon-green)';
+            btn.style.color = '#000';
+
+            setTimeout(() => {
+                alert('¡Transmisión recibida con éxito! (Formulario de demostración)');
+                btn.innerText = originalText;
+                btn.style.background = '';
+                btn.style.color = '';
+                e.target.reset();
+            }, 2000);
+        });
+
+    </script>
+</body>
+
+</html>
